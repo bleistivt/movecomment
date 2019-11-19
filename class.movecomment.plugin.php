@@ -43,7 +43,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
         }
 
         // Check the permissions on the category we are moving from.
-        $sender->permission('Vanilla.Discussions.Edit', true, 'Category', $discussion->CategoryID);
+        $sender->permission('Vanilla.Discussions.Edit', true, 'Category', $discussion->PermissionCategoryID);
 
         if ($sender->Form->authenticatedPostBack()) {
             // Fetch the target discussion.
@@ -61,7 +61,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
             $offset = $sender->CommentModel->getOffset($comment);
 
             // Escalate permissions to fit the target discussion.
-            $sender->permission('Vanilla.Discussions.Edit', true, 'Category', $target->CategoryID);
+            $sender->permission('Vanilla.Discussions.Edit', true, 'Category', $target->PermissionCategoryID);
 
             // Move the comment.
             $sender->CommentModel->setField($comment->CommentID, 'DiscussionID', $target->DiscussionID);
