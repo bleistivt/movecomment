@@ -29,12 +29,12 @@ class MoveCommentPlugin extends Gdn_Plugin {
 
         $comment = $sender->CommentModel->getID($commentID);
         if (!$comment) {
-            throw \notFoundException('Comment');
+            throw notFoundException('Comment');
         }
 
         $discussion = $sender->DiscussionModel->getID($comment->DiscussionID);
         if (!$discussion) {
-            throw \notFoundException('Discussion');
+            throw notFoundException('Discussion');
         }
 
         // Check the permissions on the category we are moving from.
@@ -44,7 +44,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
             // Fetch the target discussion.
             $target = $sender->DiscussionModel->getID($sender->Form->getValue('TargetDiscussionID'));
             if (!$target) {
-                throw \notFoundException('Discussion');
+                throw notFoundException('Discussion');
             }
 
             // Source and target discussions can not be the same.
@@ -90,13 +90,13 @@ class MoveCommentPlugin extends Gdn_Plugin {
             if ($redirect) {
                 $redirectUrl = '/discussion/comment/'.$comment->CommentID.'#Comment_'.$comment->CommentID;
             } else {
-                $pageNumber = \pageNumber($offset, Gdn::config('Vanilla.Comments.PerPage'), true);
-                $redirectUrl = \discussionUrl($discussion, $pageNumber);
+                $pageNumber = pageNumber($offset, Gdn::config('Vanilla.Comments.PerPage'), true);
+                $redirectUrl = discussionUrl($discussion, $pageNumber);
             }
 
             // Not in a popup, always redirect.
             if ($sender->deliveryType() === DELIVERY_TYPE_ALL) {
-                \redirectTo($redirectUrl);
+                redirectTo($redirectUrl);
             }
 
             // For JS (popup) users, only redirect if we want a page change.
