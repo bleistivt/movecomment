@@ -1,11 +1,6 @@
 <?php
 
-use Garden\StaticCacheTranslationTrait;
-
 class MoveCommentPlugin extends Gdn_Plugin {
-
-    use StaticCacheTranslationTrait;
-
 
     // Add the "Move" Option to the dropdown.
     public function base_commentOptions_handler($sender) {
@@ -21,7 +16,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
         }
 
         $args['CommentOptions']['MoveComment'] = [
-            'Label' => self::t('MoveComment.Move'),
+            'Label' => Gdn::translate('MoveComment.Move'),
             'Url' => '/discussion/movecomment/'.$args['Comment']->CommentID,
             'Class' => 'MoveComment Popup'
         ];
@@ -54,7 +49,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
 
             // Source and target discussions can not be the same.
             if ($discussion->DiscussionID === $target->DiscussionID) {
-                throw new Gdn_UserException(self::t('MoveComment.SameSourceAndTarget'));
+                throw new Gdn_UserException(Gdn::translate('MoveComment.SameSourceAndTarget'));
             }
 
             // Calculate the current offset before moving so we can use it later.
@@ -113,7 +108,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
             $sender->jsonTarget('#Comment_'.$comment->CommentID, '', 'SlideUp');
         }
 
-        $sender->title(self::t('MoveComment.TitleMoveToDiscussion'));
+        $sender->title(Gdn::translate('MoveComment.TitleMoveToDiscussion'));
 
         // Pre-fill with the last discussion this user has moved a comment to.
         $lastDiscussion = $this->getUserMeta($session->UserID, 'LastDiscussion', null, true);
