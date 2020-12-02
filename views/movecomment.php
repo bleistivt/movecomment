@@ -8,6 +8,11 @@ echo $this->Form->errors();
 ?>
 
 <ul>
+    <?php if ($this->data('moveType') === 'discussion') { ?>
+    <li>
+        <div class="DismissMessage WarningMessage"><p><?php echo Gdn::translate('MoveComment.MoveDiscussionWarning'); ?></p></div>
+    </li>
+    <?php } ?>
     <li>
         <div class="TextBoxWrapper">
         <?php
@@ -20,9 +25,11 @@ echo $this->Form->errors();
         <a href="" id="DiscussionPeek"></a>
         <i id="NoDiscussionPeek" style="visibility:hidden;"><?php echo Gdn::translate('MoveComment.NoDiscussionFound'); ?></i>
     </li>
+    <?php if ($this->data('moveType') !== 'discussion') { ?>
     <li>
         <?php echo $this->Form->checkBox('RedirectToTarget', 'MoveComment.RedirectMe'); ?>
     </li>
+    <?php } ?>
 </ul>
 
 <div class="Buttons Buttons-Confirm">

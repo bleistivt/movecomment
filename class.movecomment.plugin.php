@@ -2,7 +2,29 @@
 
 class MoveCommentPlugin extends Gdn_Plugin {
 
-    // Add the "Move" Option to the dropdown.
+    // Add the "Move" Option to the discussion dropdown.
+    public function discussionController_discussionOptions_handler($sender) {
+        $args = &$sender->EventArguments;
+
+        // Turning the discussion post into a comment is essentially deleting the discussion.
+        $isModerator = CategoryModel::checkPermission(
+            Gdn::controller()->data('Discussion')->CategoryID,
+            'Vanilla.Discussions.Delete'
+        );
+
+        if (!$isModerator) {
+            return;
+        }
+
+        $args['DiscussionOptions']['MoveComment'] = [
+            'Label' => Gdn::translate('MoveComment.MoveDiscussion'),
+            'Url' => '/discussion/movediscussion/'.$args['Discussion']->DiscussionID,
+            'Class' => 'MoveComment Popup'
+        ];
+    }
+
+
+    // Add the "Move" Option to the comment dropdown.
     public function base_commentOptions_handler($sender) {
         $args = &$sender->EventArguments;
 
@@ -23,7 +45,85 @@ class MoveCommentPlugin extends Gdn_Plugin {
     }
 
 
-    // The endpoint
+    public function discussionController_movediscussion_create($sender, $discussionID) {
+        $session = Gdn::session();
+
+        $discussion = $sender->DiscussionModel->getID($discussionID, DATASET_TYPE_ARRAY);
+        if (!$discussion) {
+            throw notFoundException('Discussion');
+        }
+
+        // Check the permissions on the category we are moving from.
+        $sender->permission('Vanilla.Discussions.Delete', true, 'Category', $discussion['PermissionCategoryID']);
+
+        if ($sender->Form->authenticatedPostBack()) {
+            // Fetch the target discussion.
+            $target = $sender->DiscussionModel->getID($sender->Form->getValue('TargetDiscussionID'));
+            if (!$target) {
+                throw notFoundException('Discussion');
+            }
+
+            // Source and target discussions can not be the same.
+            if ($discussion['DiscussionID'] === $target->DiscussionID) {
+                throw new Gdn_UserException(Gdn::translate('MoveComment.SameSourceAndTarget'));
+            }
+
+            // Escalate permissions to fit the target discussion.
+            $sender->permission('Vanilla.Discussions.Edit', true, 'Category', $target->PermissionCategoryID);
+
+            // Create a comment out of the discussion.
+            $newComment = array_merge($discussion, ['DiscussionID' => $target->DiscussionID]);
+            $commentID = $sender->CommentModel->insert($newComment);
+
+            if (!$commentID) {
+                throw new Gdn_UserException("Cannot create comment.");
+            }
+
+            $newComment['CommentID'] = $commentID;
+            $this->EventArguments['SourceDiscussion'] = $discussion;
+            $this->EventArguments['TargetComment'] = $newComment;
+            $this->fireEvent('TransformDiscussionToComment');
+
+            // Delete the discussion. (This updates counts.)
+            $sender->DiscussionModel->deleteID($discussion['DiscussionID']);
+
+            // Update the comment count of the target discussion.
+            $sender->CommentModel->updateCommentCount($target->DiscussionID);
+
+            // Update the category.
+            CategoryModel::instance()->setRecentPost($target->CategoryID);
+
+            // Correct CountAllComments for the category and its parents.
+            CategoryModel::incrementAggregateCount($target->CategoryID, CategoryModel::AGGREGATE_COMMENT);
+
+            // Save the target discussion ID with the user so the form can be pre-filled.
+            $this->setUserMeta($session->UserID, 'LastDiscussion', $target->DiscussionID);
+
+            // Redirect to the target discussion.
+            $redirectUrl = '/discussion/comment/'.$commentID.'#Comment_'.$commentID;
+
+            // Not in a popup, always redirect.
+            if ($sender->deliveryType() === DELIVERY_TYPE_ALL) {
+                redirectTo($redirectUrl);
+            }
+
+            $sender->setRedirectTo($redirectUrl);
+        }
+
+        $sender->title(Gdn::translate('MoveComment.TitleMoveToDiscussion'));
+
+        // Pre-fill with the last discussion this user has moved a comment to.
+        $lastDiscussion = $this->getUserMeta($session->UserID, 'LastDiscussion', null, true);
+        if ($lastDiscussion) {
+            $sender->Form->setValue('TargetDiscussionID', $lastDiscussion);
+        }
+
+        $sender->setData('moveType', 'discussion');
+
+        $sender->render('movecomment', '', 'plugins/movecomment');
+    }
+
+
     public function discussionController_movecomment_create($sender, $commentID) {
         $session = Gdn::session();
 

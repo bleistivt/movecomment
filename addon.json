@@ -1,7 +1,7 @@
 {
     "name": "Move Comment",
     "description": "Lightweight alternative to Split/Merge that lets you move single comments between discussions.",
-    "version": "1.0.1",
+    "version": "2.0",
     "hasLocale": true,
     "mobileFriendly": true,
     "license": "GNU GPL2",
