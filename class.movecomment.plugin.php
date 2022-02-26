@@ -265,7 +265,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
                 // Create a discussion out of the comment.
                 $newDiscussion = array_merge($comment, [
                     'CategoryID' => $target['CategoryID'],
-                    'Name' => substr($sender->Form->getValue('Name') ?: $comment['Body'], 0, 50),
+                    'Name' => substr($sender->Form->getValue('Name') ?: $comment['Body'], 0, 100),
                     'DateLastComment' => $comment['DateInserted']
                 ]);
                 unset($newDiscussion['DiscussionID']);
@@ -315,7 +315,7 @@ class MoveCommentPlugin extends Gdn_Plugin {
 
         $sender->title(Gdn::translate('MoveComment.TitleMoveToNewDiscussion'));
 
-        $sender->Form->setValue('Name', substr($comment['Body'], 0, 50));
+        $sender->Form->setValue('Name', substr($comment['Body'], 0, 100));
 
         $sender->render('movenewdiscussion', '', 'plugins/movecomment');
     }
